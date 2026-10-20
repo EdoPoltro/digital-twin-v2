@@ -2,3 +2,9 @@
 .env.local
 
 venv
+
+Hierarchical-Localization
+
+data/**
+!data/**/
+!data/**/.gitkeep

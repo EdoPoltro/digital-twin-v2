@@ -52,3 +52,8 @@ def arrange_model(model_out: Path, sparse_out: Path, exception_type: Type[Except
     for item in list(sparse_out.iterdir()):
         if item.is_file():
             shutil.move(str(item), str(model_out / item.name))
+
+def ask_to_continue() -> bool:
+    user_input = input('[SYSTEM] Si vuole continuare con la pipeline ? (y/n): ').strip().lower()
+    return user_input == 'y'
+

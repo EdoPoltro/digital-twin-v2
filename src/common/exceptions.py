@@ -1,3 +1,6 @@
+class ExtractorError(Exception):
+    pass
+
 class FExtractorError(Exception):
     pass
 
