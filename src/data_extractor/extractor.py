@@ -1,10 +1,10 @@
 from src.common.exceptions import ExtractorError
+from src.common.utils import *
 import shutil
 from typing import Literal
 import os
 import cv2
 import numpy as np
-from src.common.utils import *
 
 class Extractor(Logger):
 
@@ -30,7 +30,7 @@ class Extractor(Logger):
         self.offset_camera_uno = offset_camera_uno
         self.offset_camera_due = offset_camera_due
 
-        self.prefix = 'D EXTRACTOR'
+        self.log_name = 'D EXTRACTOR'
 
         if self.mode == 'stereo':
             if not self.raw_camera_due or not self.frames_camera_due:
@@ -49,10 +49,10 @@ class Extractor(Logger):
     def _stereo(self):
 
         # fase 1, controllo dati e pulizia
-        self.raw_camera_uno_video = self._data_detection(self.raw_camera_uno)
-        self.raw_camera_due_video = self._data_detection(self.raw_camera_due)
-        self._output_cleaning(self.frames_camera_uno)
-        self._output_cleaning(self.frames_camera_due)
+        self.raw_camera_uno_video = self._get_video(self.raw_camera_uno)
+        self.raw_camera_due_video = self._get_video(self.raw_camera_due)
+        folder_cleaning(self.frames_camera_uno)
+        folder_cleaning(self.frames_camera_due)
         if self.output:
             self.log(f"Video camera uno: {self.raw_camera_uno_video}")
             self.log(f"Video camera due: {self.raw_camera_due_video}")
@@ -104,8 +104,8 @@ class Extractor(Logger):
     def _mono(self):
                 
         # fase 1, controllo dati e pulizia
-        self.raw_camera_uno_video = self._data_detection(self.raw_camera_uno)
-        self._output_cleaning(self.frames_camera_uno)
+        self.raw_camera_uno_video = self._get_video(self.raw_camera_uno)
+        folder_cleaning(self.frames_camera_uno)
         if self.output:
             self.log(f"Video camera uno: {self.raw_camera_uno_video}")
 
@@ -137,44 +137,24 @@ class Extractor(Logger):
         # fase 5, release
         self.capture_camera_uno.release()
 
-    def _data_detection(self, folder) -> str:
+    def _get_video(self, folder: Path) -> Path:
         extensions = ('.mp4', '.avi', '.mov', '.mkv')
 
-        if not os.path.isdir(folder):
-            raise ExtractorError(f"La cartella non e' stata trovata: {folder}")
+        num = data_detection(folder, ExtractorError)
 
-        content: list[str] = os.listdir(folder)
+        if num > 1:
+            raise ExtractorError(f"La cartella contiene piu' di un video: {folder}")
+        
+        content: list[str] = [f for f in os.listdir(folder) if not f.startswith('.')]
+        target = folder / content[0]
 
-        if len(content) == 0:
-            raise ExtractorError(f"La cartella e' vuota: {folder}")
-
-        if len(content) > 1:
-            raise ExtractorError(f"La cartella contiene piu' di un elemento: {folder}")
-
-        target = content[0]
-        target_path = os.path.join(folder, target)
-
-        if not os.path.isfile(target_path):
+        if not os.path.isfile(target):
             raise ExtractorError(f"La cartella non contiene video: {folder}")
 
-        if not target.lower().endswith(extensions):
-            raise ExtractorError(f"Il video non e' di un formato supportato: {target_path}")
-
-        return target_path
-
-    def _output_cleaning(self, folder):
-        try:
-            os.makedirs(folder, exist_ok=True)
-            for item in os.listdir(folder):
-                target = os.path.join(folder, item)
-
-                if os.path.isfile(target) or os.path.islink(target):
-                    os.remove(target)
-
-                elif os.path.isdir(target):
-                    shutil.rmtree(target)
-        except Exception:
-            raise ExtractorError(f"Impossibile pulire la cartella di output: {folder}")
+        if not content[0].lower().endswith(extensions):
+            raise ExtractorError(f"Il video non e' di un formato supportato: {target}")
+        
+        return target
 
     def _flash_detection(self, video: str, max_variation=30) -> int:
         capture = cv2.VideoCapture(video)
@@ -340,5 +320,5 @@ class Extractor(Logger):
 
     def _save_frame(self, folder: str, frame, index: int):
         target = f'frame_{index:04d}.png'
-        target_path = os.path.join(folder, target)
+        target_path = folder / target
         cv2.imwrite(target_path, frame)

@@ -12,7 +12,7 @@ def data_detection(folder: Path, exception_type: Type[Exception]) -> int:
     if not os.path.isdir(folder):
         raise exception_type(f"La cartella non e' stata trovata: {folder}") 
 
-    content: list[str] = os.listdir(folder)
+    content: list[str] = [f for f in os.listdir(folder) if not f.startswith('.')]
     
     if len(content) == 0:
         raise exception_type(f"La cartella e' vuota: {folder}")
