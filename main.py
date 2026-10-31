@@ -15,6 +15,8 @@ def main():
         extractor = Extractor(
             mode=MODE,
             margin=MARGIN_OFFSET,
+            flow_filter = FLOW_FILTER,
+            blur_filter = BLUR_FILTER,
             offset_camera_uno=OFFSET_CAMERA_UNO,
             offset_camera_due=OFFSET_CAMERA_DUE,
             output=OUTPUT,

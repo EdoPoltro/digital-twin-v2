@@ -31,6 +31,8 @@ def folder_cleaning(folder: Path, exception_type: Type[Exception]) -> None:
     try:
         os.makedirs(folder, exist_ok=True)
         for item in os.listdir(folder):
+            if item.startswith('.'):
+                continue
             target = folder / item
 
             if os.path.isfile(target) or os.path.islink(target):

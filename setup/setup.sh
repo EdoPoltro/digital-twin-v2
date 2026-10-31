@@ -22,3 +22,5 @@ if [ -f "requirements.txt" ]; then
 else
     echo "Avviso: requirements.txt non trovato nella cartella corrente, salto il passaggio."
 fi
+
+sed -i 's/torch.load(load_path, map_location="cpu")/torch.load(load_path, map_location="cpu", weights_only=False)/g' venv/lib/python3.10/site-packages/nerfstudio/utils/eval_utils.py

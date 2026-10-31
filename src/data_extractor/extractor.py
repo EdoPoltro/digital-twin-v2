@@ -13,6 +13,8 @@ class Extractor(Logger):
         mode: Literal['stereo', 'mono'],
         margin: int,
         output: bool,
+        flow_filter: int,
+        blur_filter: int,
         raw_camera_uno: str,
         frames_camera_uno: str,
         offset_camera_uno: int = None,
@@ -23,6 +25,8 @@ class Extractor(Logger):
         self.mode = mode
         self.margin = margin
         self.output = output
+        self.flow_filter = flow_filter
+        self.blur_filter = blur_filter
         self.raw_camera_uno = raw_camera_uno
         self.raw_camera_due = raw_camera_due
         self.frames_camera_uno = frames_camera_uno
@@ -51,8 +55,8 @@ class Extractor(Logger):
         # fase 1, controllo dati e pulizia
         self.raw_camera_uno_video = self._get_video(self.raw_camera_uno)
         self.raw_camera_due_video = self._get_video(self.raw_camera_due)
-        folder_cleaning(self.frames_camera_uno)
-        folder_cleaning(self.frames_camera_due)
+        folder_cleaning(self.frames_camera_uno, ExtractorError)
+        folder_cleaning(self.frames_camera_due, ExtractorError)
         if self.output:
             self.log(f"Video camera uno: {self.raw_camera_uno_video}")
             self.log(f"Video camera due: {self.raw_camera_due_video}")
@@ -105,7 +109,7 @@ class Extractor(Logger):
                 
         # fase 1, controllo dati e pulizia
         self.raw_camera_uno_video = self._get_video(self.raw_camera_uno)
-        folder_cleaning(self.frames_camera_uno)
+        folder_cleaning(self.frames_camera_uno, ExtractorError)
         if self.output:
             self.log(f"Video camera uno: {self.raw_camera_uno_video}")
 
@@ -243,8 +247,8 @@ class Extractor(Logger):
         max_flow = max(flow_values) if flow_values else 0
         mean_flow = sum(flow_values) / len(flow_values) if flow_values else 0
 
-        flow_threshold = np.mean(flow_values) * 1.1
-        blur_threshold = np.percentile(blur_values, 25)
+        blur_threshold = np.percentile(blur_values, self.blur_filter)
+        flow_threshold = np.percentile(flow_values, self.flow_filter)     
 
         return tot_frame, min_flow, max_flow, mean_flow, flow_threshold, min_blur, max_blur, mean_blur, blur_threshold
 
