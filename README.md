@@ -60,3 +60,6 @@ chmod +x setup/setup.sh
 ```
 source venv/bin/activate
 ```
+```
+python main.py
+```

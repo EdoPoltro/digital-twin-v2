@@ -22,7 +22,7 @@ class GSplatter(Logger):
         self.splat = splat
         self.max_workers = max_workers
 
-    def start(self):
+    def start(self) -> None:
         self.log('Inizio splatting')
 
         # fase 1, data detaction

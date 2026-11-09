@@ -46,7 +46,7 @@ def folder_cleaning(folder: Path, exception_type: Type[Exception]) -> None:
 
 def arrange_model(model_out: Path, sparse_out: Path, exception_type: Type[Exception]) -> None:
     if (model_out / 'cameras.bin').exists():
-            return
+        return
     
     if not (sparse_out / 'cameras.bin').exists():
         raise exception_type(f'File bin non trovati in {sparse_out}')

@@ -29,6 +29,7 @@ class Reconstructor(Logger):
         self.matches_file = self.matches / 'matches.h5'
         self.pairs_file = self.matches / 'pairs.txt'
         self.sparse_file = self.sparse / 'sparse.ply'
+        self.model_out = self.sparse / 'models' / '0'
 
         if self.mode == 'stereo' and not self.frames_camera_due:
             raise ReconstructorError("Percorso camera due mancante")
