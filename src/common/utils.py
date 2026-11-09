@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import shutil
+import subprocess
 from typing import Type
 
 class Logger:
@@ -59,3 +60,5 @@ def ask_to_continue() -> bool:
     user_input = input('[SYSTEM] Si vuole continuare con la pipeline ? (y/n): ').strip().lower()
     return user_input == 'y'
 
+def run_command(command: list[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(command, check=True)

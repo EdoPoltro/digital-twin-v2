@@ -12,3 +12,6 @@ class ReconstructorError(Exception):
 
 class UndistorterError(Exception):
     pass
+
+class GSplatterError(Exception):
+    pass

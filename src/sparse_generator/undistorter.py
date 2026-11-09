@@ -27,7 +27,7 @@ class Undistorter(Logger):
         self.points_file = self.sparse / 'points3D.bin'
 
         self.images = self.undistorted / 'images'
-        self.sparse_out = self.undistorted / 'sparse'
+        self.sparse_out = self.undistorted / 'output' / 'sparse'
         self.model_out = self.sparse_out / '0'
 
         if self.mode == 'stereo' and not self.frames_camera_due:
@@ -48,7 +48,7 @@ class Undistorter(Logger):
         # fase 3, undistortion
         self._undistortion(self._image_root())
 
-        # fase 4, struttura output (sparse/0)
+        # fase 4, struttura output
         arrange_model(self.model_out, self.sparse_out, UndistorterError)
 
         self.log('Undistortion completata')

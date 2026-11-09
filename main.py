@@ -3,6 +3,7 @@ from src.sparse_generator.f_extractor import FExtractor
 from src.sparse_generator.f_matcher import FMatcher
 from src.sparse_generator.reconstructor import Reconstructor
 from src.sparse_generator.undistorter import Undistorter
+from src.splat_generator.g_splatter import GSplatter
 from src.common.exceptions import *
 from config.common.config import *
 from config.data_extractor.config import *
@@ -82,6 +83,20 @@ def main():
             if not ask_to_continue():
                 return
 
+        g_splatter = GSplatter(
+            mode=MODE,
+            output=OUTPUT,
+            undistorted=UNDISTORTED,
+            transforms=TRANSFORMS,
+            trained=TRAINED,
+            splat=SPLAT,
+            max_workers=MAX_WORKERS
+        )
+
+        g_splatter.start()
+
+    except GSplatterError as e:
+        print(f'[G SPLATTER] {e}')
     except ExtractorError as e:
         print(f'[D EXTRACTOR] {e}')
     except FExtractorError as e:
