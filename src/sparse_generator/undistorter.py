@@ -66,7 +66,7 @@ class Undistorter(Logger):
                 str(image_root),
             )
         except Exception as e:
-            raise UndistorterError(f"Undistortion fallita: {e}") from e
+            raise UndistorterError(f"Undistortion e' fallita: {e}")
 
         if self.output:
             self.log(f'Immagini raddrizzate salvate in: {self.images}')

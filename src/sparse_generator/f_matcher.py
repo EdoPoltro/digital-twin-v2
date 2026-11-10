@@ -112,7 +112,7 @@ class FMatcher(Logger):
             with open(target, 'w') as file:
                 file.write('\n'.join(pairs))
         except Exception as e:
-            raise FMatcherError('Errore nel salvataggio del file pairs.txt') from e
+            raise FMatcherError('Errore nel salvataggio del file pairs.txt')
 
         return len(pairs)
 
@@ -142,7 +142,7 @@ class FMatcher(Logger):
             with open(target, 'w') as file:
                 file.write('\n'.join(pairs))
         except Exception as e:
-            raise FMatcherError('Errore nel salvataggio del file pairs.txt')from e
+            raise FMatcherError('Errore nel salvataggio del file pairs.txt')
 
         return len(pairs)
 
@@ -155,4 +155,4 @@ class FMatcher(Logger):
                 matches=target
             )        
         except Exception as e:
-            raise FMatcherError("Matching fallito") from e
+            raise FMatcherError(f"Matching fallito: {e}") 

@@ -80,6 +80,6 @@ class FExtractor(Logger):
                 image_dir=images,
                 feature_path=target
             )
-        except Exception:
-            raise FExtractorError("L'estrazione e' fallita")
+        except Exception as e:
+            raise FExtractorError(f"L'estrazione e' fallita: {e}")
         

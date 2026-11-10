@@ -231,6 +231,10 @@ class Extractor(Logger):
                 break
 
             tot_frame += 1
+            if self.output:
+                if tot_frame % 50 == 0 and getattr(self, 'output', True):
+                    self.log(f"Frames esaminati: {tot_frame}")
+
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
             if last_gray is None:

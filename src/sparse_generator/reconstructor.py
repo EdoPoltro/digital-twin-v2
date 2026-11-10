@@ -102,7 +102,7 @@ class Reconstructor(Logger):
             with open(self.rig_config, 'w') as f:
                 json.dump(rig_config, f, indent=4)
         except Exception as e:
-            raise ReconstructorError("Impossibile salvare il file rig_config.json") from e
+            raise ReconstructorError("Impossibile salvare il file rig_config.json")
 
     def _reconstruction(self, frames: Path, options = None):
         try:
@@ -128,4 +128,4 @@ class Reconstructor(Logger):
                 self.log(f'Punti trovati: {model.num_points3D()}')
                 self.log(f'Immagini allineate: {model.num_reg_images()}')
         except Exception as e:
-            raise ReconstructorError(f'Errore nella ricostruzione del modello: {e}') from e
+            raise ReconstructorError(f'Errore nella ricostruzione del modello: {e}')
