@@ -15,6 +15,7 @@ class Extractor(Logger):
         output: bool,
         flow_filter: int,
         blur_filter: int,
+        force_flash_detection: bool,
         raw_camera_uno: str,
         frames_camera_uno: str,
         offset_camera_uno: int = None,
@@ -27,6 +28,7 @@ class Extractor(Logger):
         self.output = output
         self.flow_filter = flow_filter
         self.blur_filter = blur_filter
+        self.force_flash_detection = force_flash_detection
         self.raw_camera_uno = raw_camera_uno
         self.raw_camera_due = raw_camera_due
         self.frames_camera_uno = frames_camera_uno
@@ -87,6 +89,8 @@ class Extractor(Logger):
             raise ExtractorError("Impossibile aprire il video per l'analisi")
 
         capture_analysis.set(cv2.CAP_PROP_POS_FRAMES, self.offset_camera_uno)
+        if self.output:
+            self.log('Inizio analisi')
 
         tot_frame, min_flow, max_flow, mean_flow, self.flow_threshold, min_blur, max_blur, mean_blur, self.blur_threshold = self._analyze_video(capture_analysis)
         capture_analysis.release()
@@ -111,7 +115,14 @@ class Extractor(Logger):
         self.raw_camera_uno_video = self._get_video(self.raw_camera_uno)
         folder_cleaning(self.frames_camera_uno, ExtractorError)
         if self.output:
-            self.log(f"Video camera uno: {self.raw_camera_uno_video}")
+            self.log(f"Video trovato: {self.raw_camera_uno_video}")
+
+        # fase 2, flash detection forzata
+        if self.force_flash_detection:
+            if self.offset_camera_uno is None:
+                self.offset_camera_uno = self._flash_detection(self.raw_camera_uno_video)   
+            if self.output:
+                self.log(f"Offset impostato: {self.offset_camera_uno}")
 
         # fase 2, inizializzo e applico l'offset
         self.capture_camera_uno = cv2.VideoCapture(self.raw_camera_uno_video)
@@ -119,11 +130,19 @@ class Extractor(Logger):
         if not self.capture_camera_uno.isOpened():
             raise ExtractorError("Impossibile aprire il video con cv2")
 
+        if self.offset_camera_uno:
+            self.capture_camera_uno.set(cv2.CAP_PROP_POS_FRAMES, self.offset_camera_uno)
+
         # fase 3, analisi del video
         capture_analysis = cv2.VideoCapture(self.raw_camera_uno_video)
 
         if not capture_analysis.isOpened():
             raise ExtractorError("Impossibile aprire il video per l'analisi")
+
+        if self.offset_camera_uno:
+            capture_analysis.set(cv2.CAP_PROP_POS_FRAMES, self.offset_camera_uno)
+        if self.output:
+            self.log('Inizio analisi')
 
         tot_frame, min_flow, max_flow, mean_flow, self.flow_threshold, min_blur, max_blur, mean_blur, self.blur_threshold = self._analyze_video(capture_analysis)
         capture_analysis.release()
@@ -163,7 +182,7 @@ class Extractor(Logger):
     def _flash_detection(self, video: str, max_variation=30) -> int:
         capture = cv2.VideoCapture(video)
         tot_frame = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        max_frame = int(tot_frame * 0.30)
+        max_frame = int(tot_frame * 0.40)
 
         frame_found = None
         old_brightness = None
@@ -278,6 +297,8 @@ class Extractor(Logger):
                 last_gray = gray.copy()
                 last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
                 counter += 1
+                if self.output:
+                    self.log(f"Frame {counter:03d}")
                 continue
 
             blur = cv2.Laplacian(gray, cv2.CV_64F).var()

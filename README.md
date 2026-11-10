@@ -22,5 +22,17 @@ python main.py
 
 Al termine di ogni modulo verra' chiesto se proseguire con quello successivo.
 
+## Download video
+
+Tramite `gdown`:
+```
+pip install gdown
+```
+```
+gdown "LINK_COPIATO_DA_GOOGLE_DRIVE"
+```
+```
+mv [video.mp4] cartella-di-destinazione/
+```
 
 

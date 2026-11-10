@@ -10,90 +10,97 @@ from config.data_extractor.config import *
 from config.sparse_generator.config import *
 from config.splat_generator.config import *
 from src.common.utils import ask_to_continue
+import argparse
 
 def main():
     try:
-        extractor = Extractor(
-            mode=MODE,
-            margin=MARGIN_OFFSET,
-            flow_filter = FLOW_FILTER,
-            blur_filter = BLUR_FILTER,
-            offset_camera_uno=OFFSET_CAMERA_UNO,
-            offset_camera_due=OFFSET_CAMERA_DUE,
-            output=OUTPUT,
-            raw_camera_uno=RAW_CAMERA_UNO,
-            raw_camera_due=RAW_CAMERA_DUE,
-            frames_camera_uno=FRAMES_CAMERA_UNO,
-            frames_camera_due=FRAMES_CAMERA_DUE
-        )
-        extractor.start()
+        start = get_start_index()
 
-        if ASK_TO_CONTINUE:
-            if not ask_to_continue():
-                return
+        if start <= 0:
+            extractor = Extractor(
+                mode=MODE,
+                margin=MARGIN_OFFSET,
+                flow_filter = FLOW_FILTER,
+                blur_filter = BLUR_FILTER,
+                force_flash_detection=FORCE_FLASH_DETECTION,
+                offset_camera_uno=OFFSET_CAMERA_UNO,
+                offset_camera_due=OFFSET_CAMERA_DUE,
+                output=OUTPUT,
+                raw_camera_uno=RAW_CAMERA_UNO,
+                raw_camera_due=RAW_CAMERA_DUE,
+                frames_camera_uno=FRAMES_CAMERA_UNO,
+                frames_camera_due=FRAMES_CAMERA_DUE
+            )
+            extractor.start()
 
-        f_extractor = FExtractor(
-            mode=MODE,
-            output=OUTPUT,
-            features=FEATURES,
-            frames_camera_uno=FRAMES_CAMERA_UNO,
-            frames_camera_due=FRAMES_CAMERA_DUE,
-            max_keypoints=MAX_KEYPOINTS,
-            keypoints_threshold=KEYPOINTS_THRESHOLD
-        )
+            if ASK_TO_CONTINUE:
+                if not ask_to_continue():
+                    return
+                
+        if start <= 1:
+            f_extractor = FExtractor(
+                mode=MODE,
+                output=OUTPUT,
+                features=FEATURES,
+                frames_camera_uno=FRAMES_CAMERA_UNO,
+                frames_camera_due=FRAMES_CAMERA_DUE,
+                max_keypoints=MAX_KEYPOINTS,
+                keypoints_threshold=KEYPOINTS_THRESHOLD
+            )
 
-        f_extractor.start()
+            f_extractor.start()
 
-        f_matcher = FMatcher(
-            mode=MODE,
-            output=OUTPUT,
-            features=FEATURES,
-            frames_camera_uno=FRAMES_CAMERA_UNO,
-            frames_camera_due=FRAMES_CAMERA_DUE,
-            matches=MATCHES,
-            overlap=OVERLAP
-        )
+            f_matcher = FMatcher(
+                mode=MODE,
+                output=OUTPUT,
+                features=FEATURES,
+                frames_camera_uno=FRAMES_CAMERA_UNO,
+                frames_camera_due=FRAMES_CAMERA_DUE,
+                matches=MATCHES,
+                overlap=OVERLAP
+            )
 
-        f_matcher.start()
+            f_matcher.start()
 
-        reconstructor = Reconstructor(
-            mode=MODE,
-            output=OUTPUT,
-            sparse=SPARSE,
-            frames_camera_uno=FRAMES_CAMERA_UNO,
-            features=FEATURES,
-            frames_camera_due=FRAMES_CAMERA_DUE,
-            matches=MATCHES
-        )
+            reconstructor = Reconstructor(
+                mode=MODE,
+                output=OUTPUT,
+                sparse=SPARSE,
+                frames_camera_uno=FRAMES_CAMERA_UNO,
+                features=FEATURES,
+                frames_camera_due=FRAMES_CAMERA_DUE,
+                matches=MATCHES
+            )
 
-        reconstructor.start()
+            reconstructor.start()
 
-        undistorter = Undistorter(
-            mode=MODE,
-            output=OUTPUT,
-            sparse=SPARSE,
-            undistorted=UNDISTORTED,
-            frames_camera_uno=FRAMES_CAMERA_UNO,
-            frames_camera_due=FRAMES_CAMERA_DUE
-        )
+            undistorter = Undistorter(
+                mode=MODE,
+                output=OUTPUT,
+                sparse=SPARSE,
+                undistorted=UNDISTORTED,
+                frames_camera_uno=FRAMES_CAMERA_UNO,
+                frames_camera_due=FRAMES_CAMERA_DUE
+            )
 
-        undistorter.start()
+            undistorter.start()
 
-        if ASK_TO_CONTINUE:
-            if not ask_to_continue():
-                return
+            if ASK_TO_CONTINUE:
+                if not ask_to_continue():
+                    return
+                
+        if start <= 2:
+            g_splatter = GSplatter(
+                mode=MODE,
+                output=OUTPUT,
+                undistorted=UNDISTORTED,
+                transforms=TRANSFORMS,
+                trained=TRAINED,
+                splat=SPLAT,
+                max_workers=MAX_WORKERS
+            )
 
-        g_splatter = GSplatter(
-            mode=MODE,
-            output=OUTPUT,
-            undistorted=UNDISTORTED,
-            transforms=TRANSFORMS,
-            trained=TRAINED,
-            splat=SPLAT,
-            max_workers=MAX_WORKERS
-        )
-
-        g_splatter.start()
+            g_splatter.start()
 
     except GSplatterError as e:
         print(f'[G SPLATTER] {e}')
@@ -107,6 +114,18 @@ def main():
         print(f'[RECONSTRUCTOR] {e}')
     except Exception as e:
         print(f'Errore imprevisto: {e}')
+
+def get_start_index() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--start-from",
+        type=str,
+        choices=MODULES,
+        default="data_extractor",
+        help="Specifica da quale modulo far partire la pipeline"
+    )
+    args = parser.parse_args()
+    return MODULES.index(args.start_from)
 
 if __name__ == "__main__":
     main()

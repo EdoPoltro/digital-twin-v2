@@ -4,8 +4,9 @@ from pathlib import Path
 MARGIN_OFFSET: int = 20
 OFFSET_CAMERA_UNO: int = None
 OFFSET_CAMERA_DUE: int = None
+FORCE_FLASH_DETECTION: bool = True
 FLOW_FILTER = 85
-BLUR_FILTER = 60
+BLUR_FILTER = 70
 
 DATA_DATA_EXTRACTOR: Path = DATA / 'data_extractor'
 
