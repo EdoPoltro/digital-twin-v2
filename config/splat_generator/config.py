@@ -1,7 +1,9 @@
 from config.common.config import *
 from pathlib import Path
 
-MAX_WORKERS = 4
+MAX_WORKERS = 0
+MAX_ITERATIONS = 15000 # 30000
+DOWNSAMPLE = 2 # 1
 
 DATA_SPLAT_GENERATOR: Path = DATA / 'splat_generator'
 

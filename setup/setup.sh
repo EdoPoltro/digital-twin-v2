@@ -3,7 +3,7 @@ sudo apt install software-properties-common build-essential cmake colmap libusb-
 
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo apt update
-sudo apt install python3.10 python3.10-venv python3.10-dev -y
+sudo apt install python3.10 python3.10-venv python3.10-dev
 
 python3.10 -m venv venv
 source venv/bin/activate
@@ -18,9 +18,9 @@ pip install -e .
 cd ..
 
 if [ -f "requirements.txt" ]; then
-    pip install -r requirements.txt
+    pip install --ignore-installed -r requirements.txt
 else
     echo "Avviso: requirements.txt non trovato nella cartella corrente, salto il passaggio."
 fi
 
-sed -i 's/torch.load(load_path, map_location="cpu")/torch.load(load_path, map_location="cpu", weights_only=False)/g' venv/lib/python3.10/site-packages/nerfstudio/utils/eval_utils.py
+python -c "import nerfstudio, pathlib; p = pathlib.Path(nerfstudio.__file__).parent / 'utils' / 'eval_utils.py'; text = p.read_text(); p.write_text(text.replace('torch.load(load_path, map_location=\"cpu\")', 'torch.load(load_path, map_location=\"cpu\", weights_only=False)')); print('Patch applicata con successo a:', p)"

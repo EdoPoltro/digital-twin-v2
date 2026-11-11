@@ -11,7 +11,9 @@ class GSplatter(Logger):
         transforms: Path,
         trained: Path,
         splat: Path,
-        max_workers: int | None = None
+        max_workers: int | None = None,
+        max_iterations: int | None = None,
+        downsample: int | None = None
     ):
         self.log_name = 'G SPLATTER'
         self.mode = mode
@@ -21,6 +23,9 @@ class GSplatter(Logger):
         self.trained = trained
         self.splat = splat
         self.max_workers = max_workers
+        self.max_iterations = max_iterations
+        self.downsample = downsample
+
 
     def start(self) -> None:
         self.log('Inizio splatting')
@@ -107,8 +112,18 @@ class GSplatter(Logger):
                 '--data', str(abs_input_transforms),
                 '--output-dir', str(abs_output),
                 '--viewer.quit-on-train-completion', 'True',
-                '--vis', 'tensorboard'
+                '--vis', 'tensorboard',
+                '--pipeline.datamanager.dataparser.orientation-method', 'pca',
+                '--pipeline.datamanager.dataparser.center-method', 'focus',
             ]
+
+            if self.max_workers:
+                command += ['--pipeline.datamanager.num-workers', str(self.max_workers)]
+            if self.max_iterations:
+                command += ['--max-num-iterations', str(self.max_iterations)]
+            if self.downsample:
+                command += ['--pipeline.datamanager.downsample-factor', '2']
+                
             run_command(command)
 
             target = (abs_output / abs_input_transforms.name / 'splatfacto')
