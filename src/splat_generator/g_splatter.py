@@ -113,16 +113,20 @@ class GSplatter(Logger):
                 '--output-dir', str(abs_output),
                 '--viewer.quit-on-train-completion', 'True',
                 '--vis', 'tensorboard',
-                '--pipeline.datamanager.dataparser.orientation-method', 'pca',
-                '--pipeline.datamanager.dataparser.center-method', 'focus',
             ]
 
             if self.max_workers:
-                command += ['--pipeline.datamanager.num-workers', str(self.max_workers)]
+                command += ['--pipeline.datamanager.max-thread-workers', str(self.max_workers)]
             if self.max_iterations:
                 command += ['--max-num-iterations', str(self.max_iterations)]
             if self.downsample:
-                command += ['--pipeline.datamanager.downsample-factor', '2']
+                command += ['--pipeline.datamanager.camera-res-scale-factor', str(1 / self.downsample)]
+
+            command += [
+                'nerfstudio-data',
+                '--orientation-method', 'pca',
+                '--center-method', 'focus',
+            ]
                 
             run_command(command)
 
