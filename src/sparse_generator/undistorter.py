@@ -22,12 +22,13 @@ class Undistorter(Logger):
         self.frames_camera_uno = frames_camera_uno
         self.frames_camera_due = frames_camera_due
 
-        self.cameras_file = self.sparse / 'cameras.bin'
-        self.images_file = self.sparse / 'images.bin'
-        self.points_file = self.sparse / 'points3D.bin'
+        self.model_in = self.sparse / 'models' / '0'
+        self.cameras_file = self.model_in / 'cameras.bin'
+        self.images_file = self.model_in / 'images.bin'
+        self.points_file = self.model_in / 'points3D.bin'
 
         self.images = self.undistorted / 'images'
-        self.sparse_out = self.undistorted / 'output' / 'sparse'
+        self.sparse_out = self.undistorted / 'colmap' / 'sparse'
         self.model_out = self.sparse_out / '0'
 
         if self.mode == 'stereo' and not self.frames_camera_due:
@@ -49,7 +50,7 @@ class Undistorter(Logger):
         self._undistortion(self._image_root())
 
         # fase 4, struttura output
-        arrange_model(self.model_out, self.sparse_out, UndistorterError)
+        arrange_model(self.model_out, self.undistorted, UndistorterError)
 
         self.log('Undistortion completata')
 
@@ -62,7 +63,7 @@ class Undistorter(Logger):
         try:
             pycolmap.undistort_images(
                 str(self.undistorted),
-                str(self.sparse),
+                str(self.model_in),
                 str(image_root),
             )
         except Exception as e:

@@ -77,7 +77,8 @@ class GSplatter(Logger):
                 '--data', str(images_path),
                 '--output-dir', str(output_path),
                 '--skip-colmap', '--skip-image-processing',
-                '--colmap-model-path', str(colmap_path)
+                '--colmap-model-path', str(colmap_path),
+                '--colmap-cmd', 'true'
             ]
             run_command(command)
 

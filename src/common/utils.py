@@ -69,8 +69,8 @@ def arrange_model(model_out: Path, sparse_out: Path, exception_type: Type[Except
     model_out.mkdir(parents=True, exist_ok=True)
 
     colmap_files = [
-        'cameras.bin', 'images.bin', 'points3D.bin',
-        'cameras.txt', 'images.txt', 'points3D.txt', 
+        'cameras.bin', 'images.bin', 'points3D.bin', 'frames.bin', 'rigs.bin',
+        'cameras.txt', 'images.txt', 'points3D.txt', 'frames.txt', 'rigs.xt',
         'project.ini'
     ]
     
