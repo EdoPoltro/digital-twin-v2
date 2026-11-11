@@ -1,5 +1,5 @@
 sudo apt update
-sudo apt install software-properties-common build-essential cmake colmap -y
+sudo apt install software-properties-common build-essential cmake colmap libusb-1.0-0 ffmpeg -y
 
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo apt update

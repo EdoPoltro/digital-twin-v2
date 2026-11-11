@@ -63,12 +63,16 @@ class GSplatter(Logger):
 
     def _transforming(self, input: Path, output: Path) -> Path:
         try:
+            colmap_path = (input / 'colmap' / 'sparse' / '0').resolve()
+            images_path = (input / 'images').resolve()
+            output_path = output.resolve()
+            
             command = [
                 'ns-process-data', 'images',
-                '--data', str(input / 'images'),
-                '--output-dir', str(output),
+                '--data', str(images_path),
+                '--output-dir', str(output_path),
                 '--skip-colmap', '--skip-image-processing',
-                '--colmap-model-path', str(input / 'colmap' / 'sparse' / '0')
+                '--colmap-model-path', str(colmap_path)
             ]
             run_command(command)
 
@@ -78,29 +82,38 @@ class GSplatter(Logger):
             return result
         
         except Exception as e:
-            raise GSplatterError(f'Importing fallito: {e}')
+            raise GSplatterError(f'Importazione fallita: {e}')
 
     def _training(self, input_images: Path, input_transforms: Path, output: Path) -> Path:
         try:
-            symlink_path = input_transforms / 'images'
-            if not symlink_path.exists():
-                symlink_path.symlink_to(input_images / 'images')
+            abs_input_images = input_images.resolve()
+            abs_input_transforms = input_transforms.resolve()
+            abs_output = output.resolve()
+
+            target_images = abs_input_images / 'images'
+            symlink_path = abs_input_transforms / 'images'
+
+            if symlink_path.is_symlink():
+                symlink_path.unlink()
+            elif symlink_path.is_dir():
+                shutil.rmtree(symlink_path)
+            elif symlink_path.exists():
+                symlink_path.unlink()
+
+            symlink_path.symlink_to(target_images)
 
             command = [
                 'ns-train', 'splatfacto',
-                '--data', str(input_transforms),
-                '--output-dir', str(output),
+                '--data', str(abs_input_transforms),
+                '--output-dir', str(abs_output),
                 '--viewer.quit-on-train-completion', 'True',
                 '--vis', 'tensorboard'
             ]
-
-            if self.max_workers:
-                command += ['--pipeline.datamanager.num-workers', str(self.max_workers)]
             run_command(command)
 
-            target = (output / input_transforms.name / 'splatfacto')
+            target = (abs_output / abs_input_transforms.name / 'splatfacto')
             if not target.exists():
-                raise Exception(f'cartella {target} mancante')
+                raise Exception(f'Cartella {target} mancante')
             result = max([d for d in target.iterdir() if d.is_dir()], key=lambda p: p.stat().st_mtime)
             return result
 
@@ -109,10 +122,13 @@ class GSplatter(Logger):
 
     def _exporting(self, input: Path, output: Path) -> Path:
         try:
+            abs_input = (input / 'config.yml').resolve()
+            abs_output = output.resolve()
+
             command = [
                 'ns-export', 'gaussian-splat', 
-                '--load-config', str(input / 'config.yml'),
-                '--output-dir', str(output)
+                '--load-config', str(abs_input),
+                '--output-dir', str(abs_output)
             ]
             run_command(command)
 
@@ -122,4 +138,4 @@ class GSplatter(Logger):
             return result
 
         except Exception as e:
-            raise GSplatterError(f'Exporting fallito: {e}')
+            raise GSplatterError(f'Esportazione fallita: {e}')

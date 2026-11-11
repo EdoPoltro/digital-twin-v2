@@ -42,19 +42,49 @@ def folder_cleaning(folder: Path, exception_type: Type[Exception]) -> None:
             elif os.path.isdir(target):
                 shutil.rmtree(target)
     except Exception as e:
-        raise exception_type(f"Impossibile pulire la cartella di output: {folder}") from e
+        raise exception_type(f"Impossibile pulire la cartella di output: {folder}")
 
 def arrange_model(model_out: Path, sparse_out: Path, exception_type: Type[Exception]) -> None:
-    if (model_out / 'cameras.bin').exists():
-        return
     
-    if not (sparse_out / 'cameras.bin').exists():
-        raise exception_type(f'File bin non trovati in {sparse_out}')
+    # fase 1, controlla se i file sono gia nella cartella giusta
+    if (model_out / 'cameras.bin').exists() or (model_out / 'cameras.txt').exists():
+        return
 
+    # fase 2, controlla se i file sono in sparse o in una sotto cartella
+    source_dir = None
+    if (sparse_out / 'cameras.bin').exists() or (sparse_out / 'cameras.txt').exists():
+        source_dir = sparse_out
+    else:
+        for subfolder in sparse_out.rglob('*'):
+            if subfolder.is_dir() and subfolder != model_out:
+                if (subfolder / 'cameras.bin').exists() or (subfolder / 'cameras.txt').exists():
+                    source_dir = subfolder
+                    break
+
+    # Errore
+    if not source_dir:
+        raise exception_type(f"File del modello COLMAP (cameras.bin/txt) non trovati in {sparse_out}")
+
+    # 3. Fase 3, creo la cartella 0 se non esiste e sposto i files
     model_out.mkdir(parents=True, exist_ok=True)
-    for item in list(sparse_out.iterdir()):
-        if item.is_file():
-            shutil.move(str(item), str(model_out / item.name))
+
+    colmap_files = [
+        'cameras.bin', 'images.bin', 'points3D.bin',
+        'cameras.txt', 'images.txt', 'points3D.txt', 
+        'project.ini'
+    ]
+    
+    moved_any = False
+    for file_name in colmap_files:
+        src_file = source_dir / file_name
+        if src_file.exists():
+            dst_file = model_out / file_name
+            if src_file != dst_file:
+                shutil.move(str(src_file), str(dst_file))
+            moved_any = True
+
+    if not moved_any:
+        raise exception_type(f"Nessun file di modello valido spostato da {source_dir} a {model_out}")
 
 def ask_to_continue() -> bool:
     user_input = input('[SYSTEM] Si vuole continuare con la pipeline ? (y/n): ').strip().lower()

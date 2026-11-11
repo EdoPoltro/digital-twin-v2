@@ -65,7 +65,7 @@ class Reconstructor(Logger):
         # fase 4 recostruction
         self._reconstruction(self.frames_camera_uno.parent, mapper_options)
 
-        # fase 4, struttura output (models/0)
+        # fase 5, struttura output (models/0)
         arrange_model(self.model_out, self.sparse, ReconstructorError)
 
     def _mono(self):
@@ -78,8 +78,11 @@ class Reconstructor(Logger):
         # fase 2, pulizia output
         folder_cleaning(self.sparse, ReconstructorError)
 
-        # fase 4 recostruction
+        # fase 3 recostruction
         self._reconstruction(self.frames_camera_uno)
+
+        # fase 4, struttura output (models/0)
+        arrange_model(self.model_out, self.sparse, ReconstructorError)
 
     def _rig_config(self) -> None:
         rig_config = [
