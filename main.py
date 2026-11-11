@@ -97,7 +97,9 @@ def main():
                 transforms=TRANSFORMS,
                 trained=TRAINED,
                 splat=SPLAT,
-                max_workers=MAX_WORKERS
+                max_workers=MAX_WORKERS,
+                max_iterations=MAX_ITERATIONS,
+                downsample=DOWNSAMPLE
             )
 
             g_splatter.start()
