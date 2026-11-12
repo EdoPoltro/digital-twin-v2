@@ -14,6 +14,7 @@ class FExtractor(Logger):
         features: Path,
         frames_camera_due: Path | None = None,
         max_keypoints: int = 8192,
+        max_resize =2048,
         keypoints_threshold: float = 0.0
     ):
         self.log_name = 'F EXTRACTOR'
@@ -24,9 +25,9 @@ class FExtractor(Logger):
         self.features = features
 
         self.conf = extract_features.confs['superpoint_aachen'].copy()
+        self.conf['preprocessing']['resize_max'] = max_resize
         self.conf['model']['max_keypoints'] = max_keypoints
         self.conf['model']['keypoint_threshold'] = keypoints_threshold
-        self.conf['preprocessing']['resize_max'] = 2048
 
         if self.mode == 'stereo':
             if not self.frames_camera_due:
