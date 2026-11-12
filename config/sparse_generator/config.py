@@ -1,6 +1,7 @@
 from config.common.config import *
 from pathlib import Path
 
+RIG_OFFSET: tuple[float, float, float] | None = (0.30, 0.0, 0.0) 
 MAX_KEYPOINTS: int = 8192
 MAX_RESIZE: int = 2048
 KEYPOINTS_THRESHOLD: float = 0.0

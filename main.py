@@ -83,7 +83,8 @@ def main():
                 sparse=SPARSE,
                 undistorted=UNDISTORTED,
                 frames_camera_uno=FRAMES_CAMERA_UNO,
-                frames_camera_due=FRAMES_CAMERA_DUE
+                frames_camera_due=FRAMES_CAMERA_DUE,
+                rig_offeset=RIG_OFFSET
             )
 
             undistorter.start()
