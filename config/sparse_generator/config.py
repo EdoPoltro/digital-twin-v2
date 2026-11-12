@@ -3,7 +3,7 @@ from pathlib import Path
 
 MAX_KEYPOINTS: int = 8192
 MAX_RESIZE: int = 2048
-KEYPOINTS_THRESHOLD: int = 0.0
+KEYPOINTS_THRESHOLD: float = 0.0
 OVERLAP: int = 12
 
 DATA_SPARSE_GENERATOR: Path = DATA / 'sparse_generator'

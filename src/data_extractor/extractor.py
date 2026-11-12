@@ -313,7 +313,7 @@ class Extractor(Logger):
             if not all(rets):
                 break
 
-            gray = self._to_gray(frame[0])
+            gray = self._to_gray(frames[0])
             current_frames = {
                 'id': 1 if current_frames is None else current_frames['id'] + 1,
                 'frames': frames,

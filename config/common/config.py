@@ -4,7 +4,7 @@ from typing import Literal
 
 MODULES: list[str] = ["data_extractor", "sparse_generator", "splat_generator"]
 ASK_TO_CONTINUE: bool = True
-MODE: Literal['stereo', 'mono'] = 'stereo'
+MODE: Literal['stereo', 'mono'] = 'mono'
 OUTPUT: bool = True
 
 DATA: Path = Path('data')

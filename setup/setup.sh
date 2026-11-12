@@ -6,7 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
 
 $SUDO apt-get update
-$SUDO apt-get install -y build-essential git curl ffmpeg colmap libusb-1.0-0 libgl1 libglib2.0-0 libegl1 libgomp1
+$SUDO apt-get install -y build-essential git curl ffmpeg libusb-1.0-0 libgl1 libglib2.0-0 libegl1 libgomp1
 
 # Python 3.10 con uv (Ubuntu 24.04 non lo ha in apt)
 curl -LsSf https://astral.sh/uv/install.sh | sh
