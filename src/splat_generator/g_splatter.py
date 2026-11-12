@@ -125,7 +125,8 @@ class GSplatter(Logger):
 
             command += [
                 'nerfstudio-data',
-                '--orientation-method', 'pca',
+                '--eval-mode', 'all',
+                '--orientation-method', 'up',
                 '--center-method', 'focus',
             ]
                 

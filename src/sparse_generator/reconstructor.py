@@ -121,7 +121,8 @@ class Reconstructor(Logger):
                 features=self.features_file,
                 matches=self.matches_file,
                 camera_mode=camera_mode,
-                mapper_options=options
+                mapper_options=options,
+                image_options=dict(camera_model='OPENCV')
             )
 
             model.export_PLY(str(self.sparse_file))

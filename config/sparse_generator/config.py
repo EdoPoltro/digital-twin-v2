@@ -3,7 +3,7 @@ from pathlib import Path
 
 MAX_KEYPOINTS = 4096
 KEYPOINTS_THRESHOLD = 0.0
-OVERLAP = 5
+OVERLAP = 12
 
 DATA_SPARSE_GENERATOR: Path = DATA / 'sparse_generator'
 
