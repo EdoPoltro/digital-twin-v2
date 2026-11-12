@@ -100,6 +100,9 @@ class Reconstructor(Logger):
         ])
 
     def _database_config(self, frames: Path, camera_mode) -> None:
+        for hidden in frames.rglob('.ipynb_checkpoints'):
+            shutil.rmtree(hidden, ignore_errors=True)
+    
         reconstruction.create_empty_db(self.database)
         reconstruction.import_images(
             frames, self.database, camera_mode, None, dict(camera_model='OPENCV')

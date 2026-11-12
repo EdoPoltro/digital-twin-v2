@@ -72,7 +72,8 @@ def main():
                 frames_camera_uno=FRAMES_CAMERA_UNO,
                 features=FEATURES,
                 frames_camera_due=FRAMES_CAMERA_DUE,
-                matches=MATCHES
+                matches=MATCHES,
+                rig_offset=RIG_OFFSET
             )
 
             reconstructor.start()
@@ -84,7 +85,6 @@ def main():
                 undistorted=UNDISTORTED,
                 frames_camera_uno=FRAMES_CAMERA_UNO,
                 frames_camera_due=FRAMES_CAMERA_DUE,
-                rig_offeset=RIG_OFFSET
             )
 
             undistorter.start()
