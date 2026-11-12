@@ -13,8 +13,8 @@ class FExtractor(Logger):
         frames_camera_uno: Path,
         features: Path,
         frames_camera_due: Path | None = None,
-        max_keypoints: int = 8192,
-        max_resize =2048,
+        max_keypoints: int = 4096,
+        max_resize: int = 2048,
         keypoints_threshold: float = 0.0
     ):
         self.log_name = 'F EXTRACTOR'

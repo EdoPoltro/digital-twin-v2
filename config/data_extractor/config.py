@@ -2,11 +2,12 @@ from config.common.config import *
 from pathlib import Path
 
 MARGIN_OFFSET: int = 20
+MAX_FRAME_GAP: int = 15 
 OFFSET_CAMERA_UNO: int = None
 OFFSET_CAMERA_DUE: int = None
 FORCE_FLASH_DETECTION: bool = True
-FLOW_FILTER = 55
-BLUR_FILTER = 45
+FLOW_FILTER: int = 55
+BLUR_FILTER: int = 45
 
 DATA_DATA_EXTRACTOR: Path = DATA / 'data_extractor'
 

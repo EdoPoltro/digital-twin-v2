@@ -1,9 +1,10 @@
 from config.common.config import *
 from pathlib import Path
 
-MAX_KEYPOINTS = 4096
-KEYPOINTS_THRESHOLD = 0.0
-OVERLAP = 12
+MAX_KEYPOINTS: int = 8192
+MAX_RESIZE: int = 2048
+KEYPOINTS_THRESHOLD: int = 0.0
+OVERLAP: int = 12
 
 DATA_SPARSE_GENERATOR: Path = DATA / 'sparse_generator'
 

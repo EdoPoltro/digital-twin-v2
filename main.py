@@ -29,7 +29,8 @@ def main():
                 raw_camera_uno=RAW_CAMERA_UNO,
                 raw_camera_due=RAW_CAMERA_DUE,
                 frames_camera_uno=FRAMES_CAMERA_UNO,
-                frames_camera_due=FRAMES_CAMERA_DUE
+                frames_camera_due=FRAMES_CAMERA_DUE,
+                max_frame_gap=MAX_FRAME_GAP,
             )
             extractor.start()
 
@@ -45,7 +46,8 @@ def main():
                 frames_camera_uno=FRAMES_CAMERA_UNO,
                 frames_camera_due=FRAMES_CAMERA_DUE,
                 max_keypoints=MAX_KEYPOINTS,
-                keypoints_threshold=KEYPOINTS_THRESHOLD
+                keypoints_threshold=KEYPOINTS_THRESHOLD,
+                max_resize = MAX_RESIZE
             )
 
             f_extractor.start()

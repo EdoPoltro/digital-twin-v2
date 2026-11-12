@@ -125,6 +125,10 @@ class Reconstructor(Logger):
                 image_options=dict(camera_model='OPENCV')
             )
 
+            shutil.rmtree(self.sparse / 'models', ignore_errors=True)
+            self.model_out.mkdir(parents=True, exist_ok=True)
+            model.write(str(self.model_out))
+
             model.export_PLY(str(self.sparse_file))
 
             if self.output:

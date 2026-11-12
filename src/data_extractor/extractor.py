@@ -16,6 +16,7 @@ class Extractor(Logger):
         flow_filter: int,
         blur_filter: int,
         force_flash_detection: bool,
+        max_frame_gap: int,
         raw_camera_uno: str,
         frames_camera_uno: str,
         offset_camera_uno: int = None,
@@ -29,6 +30,7 @@ class Extractor(Logger):
         self.flow_filter = flow_filter
         self.blur_filter = blur_filter
         self.force_flash_detection = force_flash_detection
+        self.max_frame_gap = max_frame_gap
         self.raw_camera_uno = raw_camera_uno
         self.raw_camera_due = raw_camera_due
         self.frames_camera_uno = frames_camera_uno
@@ -276,9 +278,15 @@ class Extractor(Logger):
         return tot_frame, min_flow, max_flow, mean_flow, flow_threshold, min_blur, max_blur, mean_blur, blur_threshold
 
     def _extraction(self, captures: list) -> int:
-        counter = 0
+        frames_saved_counter = 0
         last_gray = None
         last_keypoints = None
+        
+        
+        statistics = []
+
+        def reference(gray):
+            return cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
 
         while True:
             frames = []
@@ -294,15 +302,15 @@ class Extractor(Logger):
             gray = cv2.cvtColor(frames[0], cv2.COLOR_BGR2GRAY)
 
             if last_gray is None:
-                self._save_frame(self.frames_camera_uno, frames[0], counter + 1)
+                self._save_frame(self.frames_camera_uno, frames[0], frames_saved_counter + 1)
                 if len(captures) > 1:
-                    self._save_frame(self.frames_camera_due, frames[1], counter + 1)
+                    self._save_frame(self.frames_camera_due, frames[1], frames_saved_counter + 1)
 
                 last_gray = gray.copy()
-                last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
-                counter += 1
+                last_keypoints = reference(gray)
+                frames_saved_counter += 1
                 if self.output:
-                    self.log(f"Frame {counter:03d}")
+                    self.log(f"Frame {frames_saved_counter:03d}")
                 continue
 
             blur = cv2.Laplacian(gray, cv2.CV_64F).var()
@@ -321,31 +329,31 @@ class Extractor(Logger):
                     avg_movement = np.mean(distances)
 
                     if avg_movement > self.flow_threshold:
-                        self._save_frame(self.frames_camera_uno, frames[0], counter + 1)
+                        self._save_frame(self.frames_camera_uno, frames[0], frames_saved_counter + 1)
                         if len(captures) > 1:
-                            self._save_frame(self.frames_camera_due, frames[1], counter + 1)
+                            self._save_frame(self.frames_camera_due, frames[1], frames_saved_counter + 1)
 
                         last_gray = gray.copy()
-                        last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
-                        counter += 1
+                        last_keypoints = reference(gray)
+                        frames_saved_counter += 1
                         if self.output:
-                            self.log(f"Frame {counter:03d} - Flow: {avg_movement:.1f}px - Blur: {blur:.1f}")
+                            self.log(f"Frame {frames_saved_counter:03d} - Flow: {avg_movement:.1f}px - Blur: {blur:.1f}")
 
                 else:
                     last_gray = gray.copy()
-                    last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
+                    last_keypoints = reference(gray)
             
             else:
                 last_gray = gray.copy()
-                last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
+                last_keypoints = reference(gray)
 
         if last_gray is None:
             raise ExtractorError("L'estrazione e' fallita, si e' verificato un problema con uno dei due video")
 
-        if counter <= 10:
+        if frames_saved_counter <= 10:
             raise ExtractorError("Sono stati estratti meno di 10 frame")
 
-        return counter
+        return frames_saved_counter
 
     def _save_frame(self, folder: str, frame, index: int):
         target = f'frame_{index:04d}.png'
