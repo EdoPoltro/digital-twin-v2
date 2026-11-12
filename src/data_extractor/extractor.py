@@ -196,12 +196,15 @@ class Extractor(Logger):
         
         return target
 
-    def _flash_detection(self, video: str, max_variation=30) -> int:
+    def _flash_detection(self, video: str, max_variation: float = 80, min_duration: int = 10) -> int:
         capture = cv2.VideoCapture(video)
         tot_frame = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         max_frame = int(tot_frame * 0.40)
 
         frame_found = None
+        candidate = None
+        base_brightness = 0.0
+        duration = 0
         old_brightness = None
 
         for i in range(max_frame):
@@ -211,13 +214,21 @@ class Extractor(Logger):
                 break
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            brightness = np.percentile(gray, 95)
+            gray = cv2.resize(gray, (480, 360))
+            brightness = float(np.percentile(gray, 99.9))
 
-            if old_brightness is not None:
-                variation = brightness - old_brightness
-                if variation > 0 and variation > max_variation:
-                    frame_found = i
+            if candidate is None:
+                if old_brightness is not None and brightness - old_brightness > max_variation:
+                    candidate = i
+                    base_brightness = old_brightness
+                    duration = 1
+            elif brightness > base_brightness + max_variation:
+                duration += 1
+                if duration >= min_duration:
+                    frame_found = candidate
                     break
+            else:
+                candidate = None
 
             old_brightness = brightness
 

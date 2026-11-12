@@ -114,6 +114,8 @@ class GSplatter(Logger):
                 '--output-dir', str(abs_output),
                 '--viewer.quit-on-train-completion', 'True',
                 '--vis', 'tensorboard',
+                '--pipeline.model.use-scale-regularization', 'True',
+                '--pipeline.model.densify-grad-thresh', '0.0004'
             ]
 
             if self.max_workers:
