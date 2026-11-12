@@ -1,10 +1,18 @@
 from src.common.exceptions import ExtractorError
 from src.common.utils import *
 import shutil
-from typing import Literal
+from typing import Literal, TypedDict
 import os
 import cv2
 import numpy as np
+
+class FramesData(TypedDict):
+    id: int
+    frames: list[np.ndarray]
+    gray: np.ndarray
+    blur: float
+    flow: float | None
+    keypoints: np.ndarray | None
 
 class Extractor(Logger):
 
@@ -17,12 +25,13 @@ class Extractor(Logger):
         blur_filter: int,
         force_flash_detection: bool,
         max_frame_gap: int,
-        raw_camera_uno: str,
-        frames_camera_uno: str,
-        offset_camera_uno: int = None,
-        raw_camera_due: str = None,
-        frames_camera_due: str = None,
-        offset_camera_due: int = None,
+        raw_camera_uno: Path,
+        frames_camera_uno: Path,
+        offset_camera_uno: int | None = None,
+        raw_camera_due: Path | None = None,
+        frames_camera_due: Path | None = None,
+        offset_camera_due: int | None = None,
+        analysis_scale: float = 0.5,
     ):
         self.mode = mode
         self.margin = margin
@@ -37,6 +46,8 @@ class Extractor(Logger):
         self.frames_camera_due = frames_camera_due
         self.offset_camera_uno = offset_camera_uno
         self.offset_camera_due = offset_camera_due
+        self.analysis_scale = analysis_scale
+        self.corner_distance = max(1, round(30 * analysis_scale))
 
         self.log_name = 'D EXTRACTOR'
 
@@ -103,9 +114,11 @@ class Extractor(Logger):
             self.log(f"Range blur: {min_blur:.1f} - {max_blur:.1f} - {mean_blur:.1f} - {self.blur_threshold:.1f}")
 
         # fase 5, estrazione e salvataggio frame
-        counter = self._extraction([self.capture_camera_uno, self.capture_camera_due])
+        counter, avg_gap, max_gap = self._extraction([self.capture_camera_uno, self.capture_camera_due])
         if self.output:
-            self.log(f"Frame per camera: {counter}") 
+            self.log(f"Frames:    {counter}") 
+            self.log(f"Gap medio: {avg_gap:.1f}")
+            self.log(f"Gap max:   {max_gap}")
 
         # fase 6, release
         self.capture_camera_uno.release()
@@ -150,14 +163,16 @@ class Extractor(Logger):
         capture_analysis.release()
 
         if self.output:
-            self.log(f"Frame analizzati: {tot_frame}")
+            self.log(f"Frames analizzati: {tot_frame}")
             self.log(f"Range flow: {min_flow:.1f}px - {max_flow:.1f}px - {mean_flow:.1f}px - {self.flow_threshold:.1f}px")
             self.log(f"Range blur: {min_blur:.1f} - {max_blur:.1f} - {mean_blur:.1f} - {self.blur_threshold:.1f}")
 
         # fase 4, estrazione e salvataggio frame
-        counter = self._extraction([self.capture_camera_uno])
+        counter, avg_gap, max_gap = self._extraction([self.capture_camera_uno])
         if self.output:
-            self.log(f"Frame estratti: {counter}") 
+            self.log(f"Frames:    {counter}") 
+            self.log(f"Gap medio: {avg_gap:.1f}")
+            self.log(f"Gap max:   {max_gap}")
 
         # fase 5, release
         self.capture_camera_uno.release()
@@ -237,11 +252,11 @@ class Extractor(Logger):
                 if tot_frame % 50 == 0 and getattr(self, 'output', True):
                     self.log(f"Frames esaminati: {tot_frame}")
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = self._to_gray(frame)
             
             if last_gray is None:
                 last_gray = gray.copy()
-                last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
+                last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=self.corner_distance)
                 continue
 
             blur = cv2.Laplacian(gray, cv2.CV_64F).var()
@@ -259,7 +274,7 @@ class Extractor(Logger):
                     flow_values.append(avg_movement)
 
             last_gray = gray.copy()
-            last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
+            last_keypoints = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=self.corner_distance)
 
         if last_gray is None:
             raise ExtractorError("L'analisi e' fallita, si e' verificato un problema con il video")
@@ -277,18 +292,17 @@ class Extractor(Logger):
 
         return tot_frame, min_flow, max_flow, mean_flow, flow_threshold, min_blur, max_blur, mean_blur, blur_threshold
 
-    def _extraction(self, captures: list) -> int:
-        frames_saved_counter = 0
-        last_gray = None
-        last_keypoints = None
-        
-        
-        statistics = []
+    def _extraction(self, captures: list) -> tuple[int, float, int]:
 
-        def reference(gray):
-            return cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=30)
+        current_frames: FramesData | None = None
+        last_saved_frames: FramesData | None = None
+        best_frames: FramesData | None = None
+        prev_best_frames: FramesData | None = None
+        saved_frames_counter: int = 0
 
-        while True:
+        saved_ids: list[int] = []
+
+        while True: 
             frames = []
             rets = []
             for cap in captures:
@@ -299,63 +313,90 @@ class Extractor(Logger):
             if not all(rets):
                 break
 
-            gray = cv2.cvtColor(frames[0], cv2.COLOR_BGR2GRAY)
+            gray = self._to_gray(frame[0])
+            current_frames = {
+                'id': 1 if current_frames is None else current_frames['id'] + 1,
+                'frames': frames,
+                'gray': gray,
+                'blur': float(cv2.Laplacian(gray, cv2.CV_64F).var()),
+                'flow': None,
+                'keypoints': None
+            }
 
-            if last_gray is None:
-                self._save_frame(self.frames_camera_uno, frames[0], frames_saved_counter + 1)
-                if len(captures) > 1:
-                    self._save_frame(self.frames_camera_due, frames[1], frames_saved_counter + 1)
-
-                last_gray = gray.copy()
-                last_keypoints = reference(gray)
-                frames_saved_counter += 1
-                if self.output:
-                    self.log(f"Frame {frames_saved_counter:03d}")
+            if last_saved_frames is None:
+                last_saved_frames = self._save_frames(current_frames, saved_frames_counter + 1, 'Primo salvataggio')
+                saved_ids.append(last_saved_frames['id'])
+                saved_frames_counter += 1
                 continue
 
-            blur = cv2.Laplacian(gray, cv2.CV_64F).var()
+            prev_best_frames = best_frames
+            if best_frames is None or current_frames['blur'] > best_frames['blur']:
+                best_frames = current_frames
 
-            if blur < self.blur_threshold:
+            if current_frames['id'] - last_saved_frames['id'] >= self.max_frame_gap:
+                last_saved_frames = self._save_frames(best_frames, saved_frames_counter + 1, f'Gap massimo ({self.max_frame_gap})')
+                saved_ids.append(last_saved_frames['id'])
+                saved_frames_counter += 1
+                best_frames = None
                 continue
 
-            if last_keypoints is not None and len(last_keypoints) > 0:
-                new_keypoints, status, _= cv2.calcOpticalFlowPyrLK(last_gray, gray, last_keypoints, None)
+            if current_frames['blur'] < self.blur_threshold:
+                continue
+
+            if last_saved_frames['keypoints'] is not None and len(last_saved_frames['keypoints']) > 0:
+                new_keypoints, status, _= cv2.calcOpticalFlowPyrLK(last_saved_frames['gray'], current_frames['gray'], last_saved_frames['keypoints'], None)
 
                 good_new = new_keypoints[status == 1]
-                good_old = last_keypoints[status == 1]
+                good_old = last_saved_frames['keypoints'][status == 1]
 
                 if len(good_new) > 10:
-                    distances = np.linalg.norm(good_new - good_old, axis=1)
-                    avg_movement = np.mean(distances)
+                    current_frames['flow'] = float(np.mean(np.linalg.norm(good_new - good_old, axis=1)))
 
-                    if avg_movement > self.flow_threshold:
-                        self._save_frame(self.frames_camera_uno, frames[0], frames_saved_counter + 1)
-                        if len(captures) > 1:
-                            self._save_frame(self.frames_camera_due, frames[1], frames_saved_counter + 1)
+            if current_frames['flow'] is None:
+                chosen = prev_best_frames if prev_best_frames is not None else current_frames
+                last_saved_frames = self._save_frames(chosen, saved_frames_counter + 1, 'Tracciamento perso')
+                saved_ids.append(last_saved_frames['id'])
+                saved_frames_counter += 1
+                best_frames = current_frames if chosen is not current_frames else None
 
-                        last_gray = gray.copy()
-                        last_keypoints = reference(gray)
-                        frames_saved_counter += 1
-                        if self.output:
-                            self.log(f"Frame {frames_saved_counter:03d} - Flow: {avg_movement:.1f}px - Blur: {blur:.1f}")
+            elif current_frames['flow'] >= self.flow_threshold:
+                last_saved_frames = self._save_frames(current_frames, saved_frames_counter + 1, 'Movimento')
+                saved_ids.append(last_saved_frames['id'])
+                saved_frames_counter += 1
+                best_frames = None
 
-                else:
-                    last_gray = gray.copy()
-                    last_keypoints = reference(gray)
-            
-            else:
-                last_gray = gray.copy()
-                last_keypoints = reference(gray)
-
-        if last_gray is None:
+        if last_saved_frames is None:
             raise ExtractorError("L'estrazione e' fallita, si e' verificato un problema con uno dei due video")
 
-        if frames_saved_counter <= 10:
+        if saved_frames_counter <= 10:
             raise ExtractorError("Sono stati estratti meno di 10 frame")
 
-        return frames_saved_counter
+        gaps = [b - a for a, b in zip(saved_ids, saved_ids[1:])]
+        avg_gap = sum(gaps) / len(gaps)
+        max_gap = max(gaps)
 
-    def _save_frame(self, folder: str, frame, index: int):
+        return saved_frames_counter, avg_gap, max_gap
+
+    def _save_frames(self, frames: FramesData, number: int, reason: str) -> FramesData:
+        self._save_frame(self.frames_camera_uno, frames['frames'][0], number)
+        if len(frames['frames']) > 1:
+            self._save_frame(self.frames_camera_due, frames['frames'][1], number)
+
+        frames['keypoints'] = cv2.goodFeaturesToTrack(frames['gray'], maxCorners=200, qualityLevel=0.01, minDistance=self.corner_distance)
+
+        if self.output:
+            flow = f" - Flow: {frames['flow']:.1f}px" if frames['flow'] is not None else ''
+            self.log(f"Frame {number:03d} (video {frames['id']}) - {reason}{flow} - Blur: {frames['blur']:.1f}")
+        return frames
+
+    def _save_frame(self, folder: Path, frame: np.ndarray, index: int):
         target = f'frame_{index:04d}.png'
         target_path = folder / target
         cv2.imwrite(target_path, frame)
+
+    def _to_gray(self, frame: np.ndarray) -> np.ndarray:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if self.analysis_scale != 1.0:
+            gray = cv2.resize(gray, None, fx=self.analysis_scale, fy=self.analysis_scale, interpolation=cv2.INTER_AREA)
+
+        return gray

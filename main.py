@@ -31,6 +31,7 @@ def main():
                 frames_camera_uno=FRAMES_CAMERA_UNO,
                 frames_camera_due=FRAMES_CAMERA_DUE,
                 max_frame_gap=MAX_FRAME_GAP,
+                analysis_scale=ANALYSIS_SCALE
             )
             extractor.start()
 

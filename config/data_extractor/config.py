@@ -8,6 +8,7 @@ OFFSET_CAMERA_DUE: int = None
 FORCE_FLASH_DETECTION: bool = True
 FLOW_FILTER: int = 55
 BLUR_FILTER: int = 45
+ANALYSIS_SCALE: float = 0.5
 
 DATA_DATA_EXTRACTOR: Path = DATA / 'data_extractor'
 
